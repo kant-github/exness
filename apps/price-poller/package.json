@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "npx esbuild ./src/index.ts --bundle --platform=node --outdir=dist --format=cjs --loader:.ts=ts --sourcemap --external:@prisma/client --external:express --external:jsonwebtoken --external:@aws-sdk/client-s3 --external:@aws-sdk/s3-request-presigner --external:bull --external:ioredis --external:ws ",
+    "build": "npx esbuild ./src/index.ts --bundle --platform=node --outdir=dist --format=cjs --loader:.ts=ts --sourcemap --external:@prisma/client --external:bull --external:ioredis --external:ws ",
     "start": "node dist/index.js",
     "dev": "yarn build && yarn start"
   },
@@ -12,10 +12,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@types/express": "^5.0.3",
     "@types/ws": "^8.18.1",
+    "bull": "^4.16.5",
     "dotenv": "^17.2.1",
-    "express": "^5.1.0",
+    "ioredis": "^5.7.0",
     "ws": "^8.18.3"
   }
 }
