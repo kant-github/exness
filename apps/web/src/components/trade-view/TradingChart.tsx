@@ -8,12 +8,19 @@ import {
   UTCTimestamp,
   CandlestickSeries,
 } from "lightweight-charts";
+import { useLiveTradingDataStore } from "../../store/useLiveTradingDataStore";
 
 export default function DummyCandleChart() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const { candles } = useLiveTradingDataStore();
+  
+  console.log("candles length is: ", candles?.length);
 
+  // Initialize chart only once
   useEffect(() => {
-    if (!chartContainerRef.current) return;
+    if (!chartContainerRef.current || chartRef.current) return;
 
     const chart: IChartApi = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
@@ -43,21 +50,31 @@ export default function DummyCandleChart() {
       }
     );
 
-    const data: CandlestickData[] = [
-      { time: 1660665600 as UTCTimestamp, open: 100, high: 110, low: 90, close: 105 },
-      { time: 1660752000 as UTCTimestamp, open: 105, high: 120, low: 100, close: 115 },
-      { time: 1660838400 as UTCTimestamp, open: 115, high: 130, low: 110, close: 120 },
-      { time: 1660924800 as UTCTimestamp, open: 120, high: 125, low: 115, close: 118 },
-      { time: 1661011200 as UTCTimestamp, open: 118, high: 130, low: 117, close: 128 },
-    ];
+    chartRef.current = chart;
+    seriesRef.current = candleSeries;
 
-    candleSeries.setData(data);
+    return () => {
+      chart.remove();
+      chartRef.current = null;
+      seriesRef.current = null;
+    };
+  }, []); // Empty dependency array - only run once
 
-    chart.timeScale().fitContent();
+  // Update data when candles change
+  useEffect(() => {
+    if (!seriesRef.current || !candles?.length) return;
 
-    // cleanup
-    return () => chart.remove();
-  }, []);
+    const data: CandlestickData[] = candles.map(candle => ({
+      time: (new Date(candle.time).getTime() / 1000) as UTCTimestamp,
+      open: parseFloat(candle.open),
+      high: parseFloat(candle.high),
+      low: parseFloat(candle.low),
+      close: parseFloat(candle.close),
+    })).reverse();
+
+    seriesRef.current.setData(data);
+    chartRef.current?.timeScale().fitContent();
+  }, [candles]);
 
   return <div ref={chartContainerRef} style={{ width: "100%", height: "100%" }} />;
 }
