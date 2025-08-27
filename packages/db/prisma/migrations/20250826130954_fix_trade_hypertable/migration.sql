@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Trade" ALTER COLUMN "trade_time" SET DATA TYPE TIMESTAMPTZ(6);

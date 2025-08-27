@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  db:
+    image: timescale/timescaledb:2.21.2-pg17
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: postgres
+    ports:
+      - "5434:5432"
+
+  redis:
+    image: redis:latest
+    container_name: redis_cache
+    ports:
+      - "6380:6379"
+
+  redis_commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis_commander
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis

@@ -20,3 +20,16 @@ model User {
   image   String?
   balance Int     @default(5000)
 }
+
+model Trade {
+  id         Int      @default(autoincrement())
+  trade_time DateTime @db.Timestamptz(6)
+  symbol     String
+  price      Decimal  @db.Decimal(18, 8)
+  qty        Decimal  @db.Decimal(18, 8)
+
+  @@id([id, trade_time])
+}
+
+
+// stream.binance
