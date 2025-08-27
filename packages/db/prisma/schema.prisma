@@ -23,13 +23,12 @@ model User {
 
 model Trade {
   id         Int      @default(autoincrement())
-  trade_time DateTime @db.Timestamptz(6)
-  symbol     String
+  tradeTime  DateTime @db.Timestamptz(6) @map("trade_time")
+  symbol     String   // Added symbol field you're using
   price      Decimal  @db.Decimal(18, 8)
-  qty        Decimal  @db.Decimal(18, 8)
-
-  @@id([id, trade_time])
+  quantity   Decimal  @db.Decimal(18, 8)
+  
+  @@id([id, tradeTime])
+  @@index([symbol, tradeTime]) // Added index for symbol-based queries
+  @@map("Trade")
 }
-
-
-// stream.binance

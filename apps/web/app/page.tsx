@@ -11,7 +11,7 @@ export default function Home() {
 
   useEffect(() => {
     if (status === "authenticated") {
-      router.push("/trade");
+      router.push("/tradingview");
     }
   }, [status, router])
 

@@ -34,8 +34,8 @@ export default class DatabaseQueue {
                 return {
                     symbol: trade.symbol,
                     price: trade.price,
-                    qty: trade.qty,
-                    trade_time: new Date(trade.trade_time)
+                    quantity: trade.qty,
+                    tradeTime: new Date(trade.trade_time)
                 }
             })
         })
