@@ -1,0 +1,167 @@
+-- TimescaleDB Setup Script (Updated for Corrected Schema)
+
+-- 1. Enable TimescaleDB Extension
+CREATE EXTENSION IF NOT EXISTS timescaledb;
+
+-- 2. Convert Trade Table to Hypertable 
+SELECT create_hypertable('"Trade"', 'trade_time');
+
+-- 3. Create Continuous Aggregates with Calculated Volume
+
+-- 1-Minute OHLCV Aggregate
+CREATE MATERIALIZED VIEW trade_1m_cagg
+WITH (timescaledb.continuous) AS
+SELECT 
+    time_bucket('1 minute', trade_time) AS time,
+    symbol,
+    FIRST(price, trade_time) AS open,
+    MAX(price) AS high,
+    MIN(price) AS low,
+    LAST(price, trade_time) AS close,
+    SUM(quantity) AS quantity_total,
+    SUM(price * quantity) AS volume, -- Calculated volume
+    COUNT(*) AS trade_count
+FROM "Trade"
+GROUP BY time_bucket('1 minute', trade_time), symbol;
+
+-- 5-Minute OHLCV Aggregate
+CREATE MATERIALIZED VIEW trade_5m_cagg
+WITH (timescaledb.continuous) AS
+SELECT 
+    time_bucket('5 minutes', trade_time) AS time,
+    symbol,
+    FIRST(price, trade_time) AS open,
+    MAX(price) AS high,
+    MIN(price) AS low,
+    LAST(price, trade_time) AS close,
+    SUM(quantity) AS quantity_total,
+    SUM(price * quantity) AS volume,
+    COUNT(*) AS trade_count
+FROM "Trade"
+GROUP BY time_bucket('5 minutes', trade_time), symbol;
+
+-- 15-Minute OHLCV Aggregate
+CREATE MATERIALIZED VIEW trade_15m_cagg
+WITH (timescaledb.continuous) AS
+SELECT 
+    time_bucket('15 minutes', trade_time) AS time,
+    symbol,
+    FIRST(price, trade_time) AS open,
+    MAX(price) AS high,
+    MIN(price) AS low,
+    LAST(price, trade_time) AS close,
+    SUM(quantity) AS quantity_total,
+    SUM(price * quantity) AS volume,
+    COUNT(*) AS trade_count
+FROM "Trade"
+GROUP BY time_bucket('15 minutes', trade_time), symbol;
+
+-- 1-Hour (60m) OHLCV Aggregate  
+CREATE MATERIALIZED VIEW trade_60m_cagg
+WITH (timescaledb.continuous) AS
+SELECT 
+    time_bucket('1 hour', trade_time) AS time,
+    symbol,
+    FIRST(price, trade_time) AS open,
+    MAX(price) AS high,
+    MIN(price) AS low,
+    LAST(price, trade_time) AS close,
+    SUM(quantity) AS quantity_total,
+    SUM(price * quantity) AS volume,
+    COUNT(*) AS trade_count
+FROM "Trade"
+GROUP BY time_bucket('1 hour', trade_time), symbol;
+
+-- 24-Hour (1-Day) OHLCV Aggregate
+CREATE MATERIALIZED VIEW trade_24h_cagg
+WITH (timescaledb.continuous) AS
+SELECT 
+    time_bucket('1 day', trade_time) AS time,
+    symbol,
+    FIRST(price, trade_time) AS open,
+    MAX(price) AS high,
+    MIN(price) AS low,
+    LAST(price, trade_time) AS close,
+    SUM(quantity) AS quantity_total,
+    SUM(price * quantity) AS volume,
+    COUNT(*) AS trade_count
+FROM "Trade"
+GROUP BY time_bucket('1 day', trade_time), symbol;
+
+-- 4. Add Refresh Policies
+
+SELECT add_continuous_aggregate_policy('trade_1m_cagg', 
+    start_offset => INTERVAL '1 hour', 
+    end_offset => INTERVAL '1 minute', 
+    schedule_interval => INTERVAL '1 minute');
+
+SELECT add_continuous_aggregate_policy('trade_5m_cagg', 
+    start_offset => INTERVAL '2 hours', 
+    end_offset => INTERVAL '5 minutes', 
+    schedule_interval => INTERVAL '5 minutes');
+
+SELECT add_continuous_aggregate_policy('trade_15m_cagg', 
+    start_offset => INTERVAL '3 hours', 
+    end_offset => INTERVAL '15 minutes', 
+    schedule_interval => INTERVAL '15 minutes');
+
+SELECT add_continuous_aggregate_policy('trade_60m_cagg', 
+    start_offset => INTERVAL '12 hours', 
+    end_offset => INTERVAL '1 hour', 
+    schedule_interval => INTERVAL '1 hour');
+
+SELECT add_continuous_aggregate_policy('trade_24h_cagg', 
+    start_offset => INTERVAL '3 days', 
+    end_offset => INTERVAL '1 day', 
+    schedule_interval => INTERVAL '1 day');
+
+-- 5. Create Performance Indexes
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_trade_symbol_time ON "Trade" (symbol, trade_time DESC);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_trade_time_symbol ON "Trade" (trade_time DESC, symbol);
+
+-- 6. Test with Sample Data
+INSERT INTO "Trade" (trade_time, symbol, price, quantity) VALUES
+(NOW(), 'BTCUSDT', 50000.50, 0.02),
+(NOW() - INTERVAL '1 minute', 'BTCUSDT', 49995.25, 0.03),
+(NOW() - INTERVAL '2 minutes', 'BTCUSDT', 50010.75, 0.04),
+(NOW() - INTERVAL '5 minutes', 'BTCUSDT', 49980.00, 0.05),
+(NOW() - INTERVAL '1 hour', 'BTCUSDT', 49900.00, 0.06);
+
+-- 7. Query Examples
+
+-- Latest 1-minute candles for BTCUSDT
+SELECT * FROM trade_1m_cagg 
+WHERE symbol = 'BTCUSDT'
+ORDER BY time DESC LIMIT 10;
+
+-- 5-minute candles for last 2 hours
+SELECT 
+    time,
+    symbol,
+    open,
+    high,
+    low,
+    close,
+    volume,
+    quantity_total,
+    trade_count
+FROM trade_5m_cagg 
+WHERE symbol = 'BTCUSDT' 
+  AND time >= NOW() - INTERVAL '2 hours'
+ORDER BY time DESC;
+
+-- Hourly candles for last 24 hours  
+SELECT * FROM trade_60m_cagg 
+WHERE symbol = 'BTCUSDT'
+  AND time >= NOW() - INTERVAL '24 hours'
+ORDER BY time DESC;
+
+-- Daily candles for last 30 days
+SELECT * FROM trade_24h_cagg 
+WHERE symbol = 'BTCUSDT'
+  AND time >= NOW() - INTERVAL '30 days'
+ORDER BY time DESC;
+
+-- 8. Verification Queries
+SELECT * FROM timescaledb_information.hypertables;
+SELECT * FROM timescaledb_information.continuous_aggregates;

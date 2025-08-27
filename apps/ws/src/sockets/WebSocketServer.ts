@@ -42,7 +42,6 @@ export default class WebSocketServer {
             try {
                 const parsed_event = JSON.parse(message);
                 this.sockets.forEach((socket) => {
-
                     if (socket.readyState === WebSocket.OPEN) {
                         console.log("sending to socket");
                         socket.send(JSON.stringify(parsed_event));

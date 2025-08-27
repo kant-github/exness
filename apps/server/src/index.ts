@@ -20,7 +20,6 @@ susbcriber.subscribe('ws:events:trades');
 susbcriber.on('message', (channel, message) => {
     try {
         const parsed_event = JSON.parse(message);
-        console.log(`[${channel}] parsed event: `, parsed_event);
     } catch (err) {
         console.error("Failed to parse message:", message, err);
     }
