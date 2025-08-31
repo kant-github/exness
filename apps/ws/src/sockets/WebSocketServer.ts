@@ -1,8 +1,25 @@
 import Redis from "ioredis";
 import { WebSocket, WebSocketServer as WSServer } from "ws"
 import { v4 as uuid } from 'uuid';
-
 import dotenv from 'dotenv'
+
+interface TradeEvent {
+    symbol: string;
+    price: string;
+    qty: string;
+    trade_time: number;
+    event_time: number;
+    trade_id: number;
+    buyer_order_id?: number;
+    seller_order_id: number;
+    is_buyer_maker: boolean;
+    first_trade_id: number;
+    last_trade_id: number;
+    bid_price: string;
+    ask_price: string;
+    spread_percentage: number;
+}
+
 dotenv.config();
 const REDIS_URL = process.env.REDIS_URL;
 
@@ -14,6 +31,7 @@ export default class WebSocketServer {
     private wss: WSServer | null = null;
     private subscriber: Redis | null = null;
     private sockets: Map<string, CustomWebSocket> = new Map();
+    private spread_percentage: number = 5;
 
     constructor() {
         this.wss = new WSServer({ port: 8080 });
@@ -38,13 +56,12 @@ export default class WebSocketServer {
 
     private read_subscriber_message() {
         this.subscriber?.on('message', (_, message) => {
-            console.log("message came")
             try {
-                const parsed_event = JSON.parse(message);
+                const parsed_event: TradeEvent = JSON.parse(message);
+                console.log('parsed event is : ', parsed_event);
                 this.sockets.forEach((socket) => {
                     if (socket.readyState === WebSocket.OPEN) {
-                        console.log("sending to socket");
-                        socket.send(JSON.stringify(parsed_event));
+                        socket.send(JSON.stringify(message));
                     }
                 })
             } catch (err) {

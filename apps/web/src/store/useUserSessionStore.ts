@@ -1,12 +1,12 @@
-import { Session } from 'next-auth';
 import { create } from 'zustand';
+import { CustomSession } from '../../app/api/auth/[...nextauth]/options';
 
 interface UserSessionStoreType {
-    session: Session | null;
-    setSession: (data: Session | null) => void;
+    session: CustomSession | null;
+    setSession: (data: CustomSession | null) => void;
 }
 
 export const useUserSessionStore = create<UserSessionStoreType>((set) => ({
     session: null,
-    setSession: (data: Session | null) => set({ session: data }),
+    setSession: (data: CustomSession | null) => set({ session: data }),
 }));

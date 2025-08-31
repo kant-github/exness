@@ -7,6 +7,10 @@
     "@prisma/client": "^5.19.1",
     "prisma": "^5.19.1"
   },
+  "scripts": {
+    "setup:db": "docker exec -i postgres_db psql -U postgres -d postgres < ./setup_timescaledb.sql",
+    "verify:db": "docker exec -i postgres_db psql -U postgres -d postgres < ./verify_timescaledb.sql"
+  },
   "exports": {
     "./client": "./index.ts"
   }

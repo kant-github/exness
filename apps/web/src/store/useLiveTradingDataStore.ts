@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import axios from "axios";
 
 interface CandleData {
     time: string;
@@ -20,8 +21,20 @@ export const useLiveTradingDataStore = create<LiveTradingDataStoreProps>((set) =
     candles: [],
 
     fetchCandles: async (asset: string, interval: string) => {
-        const response = await fetch(`http://localhost:7001/api/candles?symbol=${asset}&interval=${interval}&limit=100`);
-        const data = await response.json();
-        set({ candles: data.candles });
-    }
+        try {
+            set({ candles: [] });
+
+            const response = await axios.get("http://localhost:7001/api/candles", {
+                params: {
+                    symbol: asset,
+                    interval,
+                    limit: 100,
+                },
+            });
+
+            set({ candles: response.data.candles });
+        } catch (error) {
+            console.error("Error fetching candles:", error);
+        }
+    },
 }));

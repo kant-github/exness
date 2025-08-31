@@ -15,18 +15,14 @@ export default function DummyCandleChart() {
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const { candles } = useLiveTradingDataStore();
-  
-  console.log("candles length is: ", candles?.length);
 
-  // Initialize chart only once
   useEffect(() => {
     if (!chartContainerRef.current || chartRef.current) return;
-
     const chart: IChartApi = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
       height: chartContainerRef.current.clientHeight,
       layout: {
-        background: { color: "#141c23" },
+        background: { color: "#171717" },
         textColor: "#D1D5DB",
       },
       grid: {
@@ -38,32 +34,27 @@ export default function DummyCandleChart() {
         borderColor: "#485c7b",
       },
     });
-
     const candleSeries: ISeriesApi<"Candlestick"> = chart.addSeries(
       CandlestickSeries,
       {
-        upColor: "#4ade80",
-        downColor: "#f87171",
+        upColor: "#178bf9",
+        downColor: "#eb483f",
         borderVisible: false,
-        wickUpColor: "#4ade80",
-        wickDownColor: "#f87171",
+        wickUpColor: "#178bf9",
+        wickDownColor: "#eb483f",
       }
     );
-
     chartRef.current = chart;
     seriesRef.current = candleSeries;
-
     return () => {
       chart.remove();
       chartRef.current = null;
       seriesRef.current = null;
     };
-  }, []); // Empty dependency array - only run once
+  }, []);
 
-  // Update data when candles change
   useEffect(() => {
     if (!seriesRef.current || !candles?.length) return;
-
     const data: CandlestickData[] = candles.map(candle => ({
       time: (new Date(candle.time).getTime() / 1000) as UTCTimestamp,
       open: parseFloat(candle.open),
@@ -71,7 +62,6 @@ export default function DummyCandleChart() {
       low: parseFloat(candle.low),
       close: parseFloat(candle.close),
     })).reverse();
-
     seriesRef.current.setData(data);
     chartRef.current?.timeScale().fitContent();
   }, [candles]);

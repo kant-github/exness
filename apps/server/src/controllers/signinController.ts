@@ -30,6 +30,9 @@ export default async function signInController(req: Request, res: Response) {
                     name: user.name,
                     email: user.email,
                     image: user.image,
+                    Balance: {
+                        create: {}
+                    }
                 },
             });
         }

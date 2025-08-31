@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,21 +8,59 @@ datasource db {
 }
 
 model User {
-  id      String  @id @default(cuid())
+  id      String   @id @default(cuid())
   name    String
-  email   String  @unique
+  email   String   @unique
   image   String?
-  balance Int     @default(5000)
+  Balance Balance?
+  Orders  Orders[]
 }
 
 model Trade {
-  id         Int      @default(autoincrement())
-  tradeTime  DateTime @db.Timestamptz(6) @map("trade_time")
-  symbol     String   // Added symbol field you're using
-  price      Decimal  @db.Decimal(18, 8)
-  quantity   Decimal  @db.Decimal(18, 8)
-  
+  id        Int      @default(autoincrement())
+  tradeTime DateTime @map("trade_time") @db.Timestamptz(6)
+  symbol    String
+  price     Decimal  @db.Decimal(18, 8)
+  quantity  Decimal  @db.Decimal(18, 8)
+
   @@id([id, tradeTime])
-  @@index([symbol, tradeTime]) // Added index for symbol-based queries
+  @@index([symbol, tradeTime])
   @@map("Trade")
+}
+
+model Balance {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  total    Int @default(10000)
+  tradable Int @default(10000)
+  locked   Int @default(0)
+}
+
+model Orders {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      OrderType
+  asset     String
+  price     BigInt
+  quantity  BigInt
+  margin    BigInt
+  levarage  Int
+  decimals  Int
+  status    OrderStatus
+  createdAt DateTime    @default(now())
+}
+
+enum OrderType {
+  LONG
+  SHORT
+}
+
+enum OrderStatus {
+  OPEN
+  CLOSED
+  LIQUIDATED
 }

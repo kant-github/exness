@@ -47,15 +47,16 @@ export default function ProfileMenu() {
         }
     }, [dropdown]);
 
-    function handler() {
-        signOut();
+    async function logoutHandler() {
+        signOut({
+            callbackUrl: '/',
+        });
     }
-
     const dropdownContent =
         dropdown && mounted ? (
             <div
                 ref={dropdownRef}
-                className="fixed z-[99999]"
+                className="fixed z-[99999] select-none"
                 style={{
                     top: `${dropdownPosition.top}px`,
                     right: `${dropdownPosition.right}px`,
@@ -77,7 +78,7 @@ export default function ProfileMenu() {
                         </a>
                         <div
                             className="px-4 py-[11px] text-xs font-normal text-red-500 hover:bg-neutral-800 flex justify-between cursor-pointer"
-                            onClick={handler}
+                            onClick={logoutHandler}
                         >
                             Sign Out
                             <IoMdLogOut size={14} />
