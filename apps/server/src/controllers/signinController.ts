@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import prisma from '@repo/db/client';
 
 export default async function signInController(req: Request, res: Response) {
+    
     const { user } = req.body;
     console.log("user is : ", user);
     try {

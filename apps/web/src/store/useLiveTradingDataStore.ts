@@ -24,7 +24,7 @@ export const useLiveTradingDataStore = create<LiveTradingDataStoreProps>((set) =
         try {
             set({ candles: [] });
 
-            const response = await axios.get("http://localhost:7001/api/candles", {
+            const response = await axios.get("http://localhost:4000/api/candles", {
                 params: {
                     symbol: asset,
                     interval,

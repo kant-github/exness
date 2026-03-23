@@ -61,7 +61,7 @@ export default class WebSocketServer {
                 console.log('parsed event is : ', parsed_event);
                 this.sockets.forEach((socket) => {
                     if (socket.readyState === WebSocket.OPEN) {
-                        socket.send(JSON.stringify(message));
+                        socket.send(JSON.stringify(parsed_event));
                     }
                 })
             } catch (err) {

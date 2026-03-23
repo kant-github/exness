@@ -1,9 +1,16 @@
 import { useLivePricesStore } from "../store/useLivePricesStore";
 
+type TradeMessage = {
+    symbol: string;
+    price: string;
+    bid_price: string;
+    ask_price: string;
+};
+
 export default class TradeSocket {
     private ws: WebSocket | null = null;
-    private buffer: Record<string, any> = {};
-    private flushInterval: any;
+    private buffer: Record<string, TradeMessage> = {};
+    private flushInterval: ReturnType<typeof setInterval> | null = null;
 
     constructor() {
         this.initialize_websocket_connection();
@@ -20,8 +27,11 @@ export default class TradeSocket {
 
         this.ws.onmessage = ({ data }) => {
             try {
-                const message = JSON.parse(data);
+                const parsed = JSON.parse(String(data));
+                const message = typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+                console.log("---------Received message: ", message);
                 if (message.symbol && message.price) {
+                    console.log("i am receiving message : ", message);
                     // keep only the latest message per symbol
                     this.buffer[message.symbol] = message;
                 }
@@ -33,7 +43,10 @@ export default class TradeSocket {
         this.ws.onclose = () => {
             const { setConnectionStatus } = useLivePricesStore.getState();
             setConnectionStatus(false);
-            clearInterval(this.flushInterval);
+            if (this.flushInterval) {
+                clearInterval(this.flushInterval);
+                this.flushInterval = null;
+            }
             setTimeout(() => this.initialize_websocket_connection(), 3000);
         };
 
@@ -48,6 +61,7 @@ export default class TradeSocket {
             const { updatePrice } = useLivePricesStore.getState();
             for (const symbol in this.buffer) {
                 const msg = this.buffer[symbol];
+                if (!msg) continue;
                 updatePrice(
                     msg.symbol,
                     msg.price,
@@ -64,7 +78,10 @@ export default class TradeSocket {
             this.ws.close();
             this.ws = null;
         }
-        clearInterval(this.flushInterval);
+        if (this.flushInterval) {
+            clearInterval(this.flushInterval);
+            this.flushInterval = null;
+        }
         const { setConnectionStatus } = useLivePricesStore.getState();
         setConnectionStatus(false);
     }

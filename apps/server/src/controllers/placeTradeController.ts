@@ -30,4 +30,5 @@ export default async function placeTradeController(req: Request, res: Response) 
 
 
     res.status(200);
+    return;
 }

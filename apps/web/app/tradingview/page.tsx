@@ -20,11 +20,11 @@ export default function Page() {
 
 
     useEffect(() => {
-        // new TradeSocket();
+        new TradeSocket();
         if (session?.user?.token) {
             async function getUserData() {
                 try {
-                    const { data } = await axios.get('http://localhost:7001/api/user', {
+                    const { data } = await axios.get('http://localhost:4000/api/user', {
                         headers: {
                             Authorization: `Bearer ${session?.user?.token}`
                         }

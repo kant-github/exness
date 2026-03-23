@@ -1,7 +1,7 @@
 import Bull from "bull";
 import dotenv from 'dotenv'
 import prisma from '@repo/db/client'
-import { MessageTypes } from "../socket/WebSocketInstance";
+// import { MessageTypes } from "../socket/WebSocketInstance";
 
 dotenv.config();
 const REDIS_URL = process.env.REDIS_URL;
@@ -42,7 +42,7 @@ export default class DatabaseQueue {
         this.batch = [];
     }
 
-    public async insert_enqueu_trades(trade: MessageTypes) {
+    public async insert_enqueu_trades(trade: any) {
         await this.trade_queue.add(trade, { removeOnComplete: true });
     }
 }

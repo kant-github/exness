@@ -17,7 +17,7 @@ export default function TradingBar() {
     async function placeOrder() {
         try {
             if (!selectedSymbol) return;
-            const { data } = await axios.post('http://localhost:7001/api/trade', {
+            const { data } = await axios.post('http://localhost:4000/api/trade', {
                 asset: selectedSymbol,
                 type: tradeType,
                 lots: lots,

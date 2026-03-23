@@ -28,7 +28,7 @@ export const authOption: AuthOptions = {
             try {
                 if (account?.provider === 'google') {
                     console.log(SIGNIN_URL);
-                    const response = await axios.post(`http://localhost:7001/api/auth/signin`, {
+                    const response = await axios.post(SIGNIN_URL, {
                         user,
                         account,
                     });
