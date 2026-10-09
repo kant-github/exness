@@ -9,7 +9,7 @@ export enum TimeSeriesEnum {
 }
 
 interface TimeSeriesStoreProps {
-    timeSeries: TimeSeriesEnum.ONE_MINUTE;
+    timeSeries: TimeSeriesEnum;
     setTimeSeries: (timeSeries: TimeSeriesEnum) => void;
 }
 
