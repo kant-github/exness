@@ -23,6 +23,9 @@ export default class TradeSocket {
         this.ws.onopen = () => {
             const { setConnectionStatus } = useLivePricesStore.getState();
             setConnectionStatus(true);
+            // onclose stops the flusher, so a reconnect must bring it back or
+            // buffered prices never reach the store again.
+            this.startFlusher();
         };
 
         this.ws.onmessage = ({ data }) => {
@@ -57,6 +60,7 @@ export default class TradeSocket {
     }
 
     private startFlusher() {
+        if (this.flushInterval) return;
         this.flushInterval = setInterval(() => {
             const { updatePrice } = useLivePricesStore.getState();
             for (const symbol in this.buffer) {
