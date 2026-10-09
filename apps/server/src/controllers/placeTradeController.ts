@@ -9,14 +9,17 @@ export default async function placeTradeController(req: Request, res: Response) 
 
     if (!userId) {
         res.status(401).json({ error: "Unauthorized" });
+        return;
     }
 
     if (!asset || !trade_type.includes(type) || lots <= 0) {
         res.status(411).json({ message: "Incorrect inputs" });
+        return;
     }
 
     if (![1, 5, 10, 20, 100].includes(levarage)) {
         res.status(411).json({ message: "Invalid leverage" });
+        return;
     }
 
     console.log("req.body is : ", req.body);
@@ -29,6 +32,13 @@ export default async function placeTradeController(req: Request, res: Response) 
     const price_from_binance = type === "BID" ? asset_current_price.bid : asset_current_price.ask;
 
 
-    res.status(200);
+    res.status(200).json({
+        success: true,
+        asset,
+        type,
+        lots,
+        levarage,
+        price: price_from_binance,
+    });
     return;
 }
