@@ -15,8 +15,7 @@ export default function TradingViewNav() {
     const { userData } = useUserDataStore()
     const [openTimeSeriesDropdown, setOpenTimeSeriesDropdown] = useState<boolean>(false);
     const [openDepositDropdown, setOpenDepositDropdown] = useState<boolean>(false);
-    const { selectedSymbol, prices } = useLivePricesStore();
-    const asset = prices[selectedSymbol];
+    const { selectedSymbol } = useLivePricesStore();
 
     return (
         <div className="w-full bg-neutral-900">
