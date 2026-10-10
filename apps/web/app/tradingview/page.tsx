@@ -20,7 +20,11 @@ export default function Page() {
 
 
     useEffect(() => {
-        new TradeSocket();
+        const socket = new TradeSocket();
+        return () => socket.disconnect();
+    }, []);
+
+    useEffect(() => {
         if (session?.user?.token) {
             async function getUserData() {
                 try {
