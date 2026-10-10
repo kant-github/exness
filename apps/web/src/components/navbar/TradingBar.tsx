@@ -7,12 +7,20 @@ import { cn } from "../../lib/utils";
 import { getCryptoImageUrl, getSymbolDisplayName } from "../trade-view/AssetRow";
 import axios from "axios";
 import { useUserSessionStore } from "../../store/useUserSessionStore";
+import { useUserDataStore } from "../../store/useUserDataStore";
+import { useOrdersStore } from "../../store/useOrdersStore";
+
+const LEVERAGE_OPTIONS = [1, 5, 10, 20, 100];
 
 export default function TradingBar() {
     const { tradeType, setTradeType } = useOpenBiddingStore();
     const { selectedSymbol, prices } = useLivePricesStore();
     const [lots, setLots] = useState(0.01);
+    const [levarage, setLevarage] = useState(1);
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const { session } = useUserSessionStore();
+    const { setUserData } = useUserDataStore();
+    const { addOrder } = useOrdersStore();
 
     async function placeOrder() {
         try {
@@ -21,14 +29,25 @@ export default function TradingBar() {
                 asset: selectedSymbol,
                 type: tradeType,
                 lots: lots,
-                levarage: 1
+                levarage: levarage
             }, {
                 headers: {
                     Authorization: `Bearer ${session?.user?.token}`
                 }
             })
-            console.log("data is : ", data);
+            if (data.order) {
+                addOrder(data.order);
+            }
+            if (data.balance) {
+                setUserData({ Balance: data.balance });
+            }
+            setMessage({ type: 'success', text: 'Order placed' });
+            setTimeout(() => setMessage(null), 3000);
         } catch (err) {
+            const text = axios.isAxiosError(err) && err.response?.data?.message
+                ? err.response.data.message
+                : 'Failed to place order';
+            setMessage({ type: 'error', text });
             console.error(err);
         }
     }
@@ -131,6 +150,25 @@ export default function TradingBar() {
                         </div>
                     </div>
 
+                    <div className="mt-4">
+                        <div className="text-xs text-neutral-400 mb-1">Leverage</div>
+                        <div className="grid grid-cols-5 gap-x-1">
+                            {LEVERAGE_OPTIONS.map((option) => (
+                                <button
+                                    key={option}
+                                    onClick={() => setLevarage(option)}
+                                    type="button"
+                                    className={cn(
+                                        "text-neutral-300 text-xs py-1.5 rounded-sm bg-neutral-800 border border-neutral-700 cursor-pointer",
+                                        levarage === option && "border-[#ffde02] text-[#ffde02]"
+                                    )}
+                                >
+                                    {option}x
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     <div className="flex flex-col space-y-2 mt-8">
                         <button
                             onClick={placeOrder}
@@ -146,6 +184,16 @@ export default function TradingBar() {
                         <button onClick={() => setTradeType(null)} type="button" className="text-neutral-300 text-xs w-full items-center py-2.5 rounded-sm bg-neutral-800 cursor-pointer border border-neutral-700">
                             Cancel
                         </button>
+                        {message && (
+                            <div
+                                className={cn(
+                                    "text-xs text-center py-1.5 rounded-sm",
+                                    message.type === 'success' ? "text-green-400 bg-green-400/10" : "text-[#eb483f] bg-[#eb483f]/10"
+                                )}
+                            >
+                                {message.text}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
