@@ -1,5 +1,6 @@
 import prisma from "@repo/db/client";
-import { Request, Response, response } from "express";
+import { Request, Response } from "express";
+import { serializeOrder } from "../lib/serializeOrder";
 
 export default async function getUserDataController(req: Request, res: Response) {
     if (!req.user?.id) {
@@ -12,12 +13,13 @@ export default async function getUserDataController(req: Request, res: Response)
             where: {
                 id: String(req.user.id)
             }, include: {
-                Balance: true
+                Balance: true,
+                Orders: true
             }
         })
 
         res.status(200).json({
-            user
+            user: user ? { ...user, Orders: user.Orders.map(serializeOrder) } : user
         })
         return;
     } catch (err) {

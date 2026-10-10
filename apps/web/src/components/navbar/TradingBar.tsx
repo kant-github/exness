@@ -7,12 +7,14 @@ import { cn } from "../../lib/utils";
 import { getCryptoImageUrl, getSymbolDisplayName } from "../trade-view/AssetRow";
 import axios from "axios";
 import { useUserSessionStore } from "../../store/useUserSessionStore";
+import { useUserDataStore } from "../../store/useUserDataStore";
 
 export default function TradingBar() {
     const { tradeType, setTradeType } = useOpenBiddingStore();
     const { selectedSymbol, prices } = useLivePricesStore();
     const [lots, setLots] = useState(0.01);
     const { session } = useUserSessionStore();
+    const { userData, setUserData } = useUserDataStore();
 
     async function placeOrder() {
         try {
@@ -27,7 +29,11 @@ export default function TradingBar() {
                     Authorization: `Bearer ${session?.user?.token}`
                 }
             })
-            console.log("data is : ", data);
+            setUserData({
+                Balance: data.balance,
+                Orders: [...(userData?.Orders ?? []), data.order]
+            });
+            setTradeType(null);
         } catch (err) {
             console.error(err);
         }

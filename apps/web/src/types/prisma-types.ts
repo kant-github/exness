@@ -32,9 +32,14 @@ export interface Orders {
   user?: User;  // optional to avoid circular typing
   type: OrderType;
   asset: string;
-  price: number;
-  locked: number;
-  qty: string;  // Decimal → string in JSON
+  price: number;     // descaled by the server before responding
+  quantity: number;  // lots, descaled by the server
+  margin: number;
+  levarage: number;
+  decimals: number;
+  status: OrderStatus;
+  createdAt: string; // ISO date string when coming from API
 }
 
 export type OrderType = "LONG" | "SHORT";
+export type OrderStatus = "OPEN" | "CLOSED" | "LIQUIDATED";
