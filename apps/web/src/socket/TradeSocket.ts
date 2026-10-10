@@ -11,6 +11,8 @@ export default class TradeSocket {
     private ws: WebSocket | null = null;
     private buffer: Record<string, TradeMessage> = {};
     private flushInterval: ReturnType<typeof setInterval> | null = null;
+    private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+    private isDisconnected = false;
 
     constructor() {
         this.initialize_websocket_connection();
@@ -47,7 +49,13 @@ export default class TradeSocket {
                 clearInterval(this.flushInterval);
                 this.flushInterval = null;
             }
-            setTimeout(() => this.initialize_websocket_connection(), 3000);
+            if (!this.isDisconnected) {
+                this.reconnectTimeout = setTimeout(() => {
+                    this.reconnectTimeout = null;
+                    this.initialize_websocket_connection();
+                    this.startFlusher();
+                }, 3000);
+            }
         };
 
         this.ws.onerror = () => {
@@ -74,6 +82,11 @@ export default class TradeSocket {
     }
 
     public disconnect() {
+        this.isDisconnected = true;
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
+        }
         if (this.ws) {
             this.ws.close();
             this.ws = null;
