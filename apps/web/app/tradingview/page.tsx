@@ -10,6 +10,7 @@ import { useUserSessionStore } from "../../src/store/useUserSessionStore";
 import { useUserDataStore } from "../../src/store/useUserDataStore";
 import { useLivePricesStore } from "../../src/store/useLivePricesStore";
 import TradeSocket from "../../src/socket/TradeSocket";
+import { useOrdersStore } from "../../src/store/useOrdersStore";
 
 export default function Page() {
     const { timeSeries } = useTimeSeriesStore();
@@ -17,6 +18,7 @@ export default function Page() {
     const { session } = useUserSessionStore();
     const { setUserData, userData } = useUserDataStore();
     const { selectedSymbol } = useLivePricesStore();
+    const { refresh } = useOrdersStore();
 
 
     useEffect(() => {
@@ -37,6 +39,14 @@ export default function Page() {
             getUserData();
         }
     }, [session?.user?.token, setUserData]);
+
+    useEffect(() => {
+        const token = session?.user?.token;
+        if (!token) return;
+        refresh(token);
+        const interval = setInterval(() => refresh(token), 3000);
+        return () => clearInterval(interval);
+    }, [session?.user?.token, refresh]);
 
     useEffect(() => {
         fetchCandles(selectedSymbol, timeSeries);
