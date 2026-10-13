@@ -7,29 +7,37 @@ import { cn } from "../../lib/utils";
 import { getCryptoImageUrl, getSymbolDisplayName } from "../trade-view/AssetRow";
 import axios from "axios";
 import { useUserSessionStore } from "../../store/useUserSessionStore";
+import { useOrdersStore } from "../../store/useOrdersStore";
+
+const LEVERAGE_OPTIONS = [1, 5, 10, 20, 100];
 
 export default function TradingBar() {
     const { tradeType, setTradeType } = useOpenBiddingStore();
     const { selectedSymbol, prices } = useLivePricesStore();
     const [lots, setLots] = useState(0.01);
+    const [leverage, setLeverage] = useState(1);
+    const [error, setError] = useState<string | null>(null);
     const { session } = useUserSessionStore();
+    const { refresh } = useOrdersStore();
 
     async function placeOrder() {
+        setError(null);
         try {
-            if (!selectedSymbol) return;
-            const { data } = await axios.post('http://localhost:4000/api/trade', {
+            if (!selectedSymbol || !session?.user?.token) return;
+            await axios.post('http://localhost:4000/api/trade', {
                 asset: selectedSymbol,
                 type: tradeType,
                 lots: lots,
-                levarage: 1
+                levarage: leverage
             }, {
                 headers: {
                     Authorization: `Bearer ${session?.user?.token}`
                 }
             })
-            console.log("data is : ", data);
+            await refresh(session.user.token);
+            setTradeType(null);
         } catch (err) {
-            console.error(err);
+            setError(axios.isAxiosError(err) && err.response?.data?.message ? err.response.data.message : "Could not place the order");
         }
     }
 
@@ -130,6 +138,27 @@ export default function TradingBar() {
                             </div>
                         </div>
                     </div>
+
+                    <div className="mt-4">
+                        <div className="text-xs text-neutral-400 mb-1">Leverage</div>
+                        <div className="grid grid-cols-5 gap-x-1">
+                            {LEVERAGE_OPTIONS.map(option => (
+                                <button
+                                    key={option}
+                                    onClick={() => setLeverage(option)}
+                                    type="button"
+                                    className={cn(
+                                        "text-neutral-300 text-xs py-1.5 rounded-sm border border-neutral-700 bg-neutral-800 cursor-pointer",
+                                        leverage === option && "border-[#ffde02] text-[#ffde02]"
+                                    )}
+                                >
+                                    {option}x
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {error && <div className="text-xs text-[#eb483f] mt-4">{error}</div>}
 
                     <div className="flex flex-col space-y-2 mt-8">
                         <button

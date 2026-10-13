@@ -33,9 +33,9 @@ model Balance {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  total    Int @default(10000)
-  tradable Int @default(10000)
-  locked   Int @default(0)
+  total    Decimal @default(10000) @db.Decimal(18, 2)
+  tradable Decimal @default(10000) @db.Decimal(18, 2)
+  locked   Decimal @default(0) @db.Decimal(18, 2)
 }
 
 model Orders {
@@ -52,6 +52,13 @@ model Orders {
   decimals  Int
   status    OrderStatus
   createdAt DateTime    @default(now())
+
+  closePrice BigInt?
+  pnl        BigInt?
+  closedAt   DateTime?
+
+  @@index([userId, status])
+  @@index([asset, status])
 }
 
 enum OrderType {

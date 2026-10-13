@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import Redis from 'ioredis';
 import router from './routes';
 import { prices_of_assets } from './prices/live_prices';
+import { liquidateLosingOrders } from './trading/liquidation';
 
 dotenv.config();
 
@@ -23,11 +24,12 @@ susbcriber.on('message', (channel, message) => {
     try {
         const parsed_event = JSON.parse(message);
         prices_of_assets.set(parsed_event.symbol, {
-            bid: parsed_event.bid_price,
-            ask: parsed_event.ask_price,
-            last: parsed_event.price,
-            spread: parsed_event.spread_percentage
+            bid: Number(parsed_event.bid_price),
+            ask: Number(parsed_event.ask_price),
+            last: Number(parsed_event.price),
+            spread: Number(parsed_event.spread_percentage)
         });
+        void liquidateLosingOrders(parsed_event.symbol);
     } catch (err) {
         console.error("Failed to parse message:", message, err);
     }

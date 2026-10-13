@@ -21,20 +21,26 @@ export interface Balance {
   id: string;
   userId: string;
   user?: User;   // optional to avoid circular requirement in frontend
-  total: number;
-  tradable: number;
-  locked: number;
+  total: number | string;
+  tradable: number | string;
+  locked: number | string;
 }
 
 export interface Orders {
   id: string;
-  userId: string;
-  user?: User;  // optional to avoid circular typing
   type: OrderType;
   asset: string;
   price: number;
-  locked: number;
-  qty: string;  // Decimal → string in JSON
+  lots: number;
+  margin: number;
+  levarage: number;
+  status: OrderStatus;
+  createdAt: string;
+  closePrice: number | null;
+  pnl: number | null;
+  closedAt: string | null;
 }
+
+export type OrderStatus = "OPEN" | "CLOSED" | "LIQUIDATED";
 
 export type OrderType = "LONG" | "SHORT";
