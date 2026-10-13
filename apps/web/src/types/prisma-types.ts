@@ -28,13 +28,18 @@ export interface Balance {
 
 export interface Orders {
   id: string;
-  userId: string;
-  user?: User;  // optional to avoid circular typing
   type: OrderType;
   asset: string;
   price: number;
-  locked: number;
-  qty: string;  // Decimal → string in JSON
+  lots: number;
+  margin: number;
+  levarage: number;
+  status: OrderStatus;
+  createdAt: string;
+  closePrice: number | null;
+  pnl: number | null;
+  closedAt: string | null;
 }
 
 export type OrderType = "LONG" | "SHORT";
+export type OrderStatus = "OPEN" | "CLOSED" | "LIQUIDATED";
