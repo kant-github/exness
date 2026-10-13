@@ -21,20 +21,32 @@ export interface Balance {
   id: string;
   userId: string;
   user?: User;   // optional to avoid circular requirement in frontend
+  // integer cents
   total: number;
   tradable: number;
   locked: number;
 }
 
+export type PositionStatus = "OPEN" | "CLOSED" | "LIQUIDATED";
+export type CloseReason = "MANUAL" | "STOP_LOSS" | "TAKE_PROFIT" | "LIQUIDATION";
+
+// Prices and lots are decimal strings; margin and pnl are integer cents.
 export interface Orders {
   id: string;
-  userId: string;
-  user?: User;  // optional to avoid circular typing
-  type: OrderType;
   asset: string;
-  price: number;
-  locked: number;
-  qty: string;  // Decimal → string in JSON
+  type: OrderType;
+  status: PositionStatus;
+  price: string;
+  lots: string;
+  margin: number;
+  levarage: number;
+  stopLoss: string | null;
+  takeProfit: string | null;
+  closePrice: string | null;
+  pnl: number | null;
+  closeReason: CloseReason | null;
+  createdAt: string;
+  closedAt: string | null;
 }
 
 export type OrderType = "LONG" | "SHORT";

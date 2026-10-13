@@ -10,6 +10,7 @@ import { useUserSessionStore } from "../../src/store/useUserSessionStore";
 import { useUserDataStore } from "../../src/store/useUserDataStore";
 import { useLivePricesStore } from "../../src/store/useLivePricesStore";
 import TradeSocket from "../../src/socket/TradeSocket";
+import { usePositionsStore } from "../../src/store/usePositionsStore";
 
 export default function Page() {
     const { timeSeries } = useTimeSeriesStore();
@@ -17,7 +18,16 @@ export default function Page() {
     const { session } = useUserSessionStore();
     const { setUserData, userData } = useUserDataStore();
     const { selectedSymbol } = useLivePricesStore();
+    const refreshPositions = usePositionsStore((s) => s.refresh);
 
+    useEffect(() => {
+        const token = session?.user?.token;
+        if (!token) return;
+        refreshPositions(token);
+        // The server closes positions on its own (liquidation, stop loss, take profit), so keep in sync.
+        const interval = setInterval(() => refreshPositions(token), 2000);
+        return () => clearInterval(interval);
+    }, [session?.user?.token, refreshPositions]);
 
     useEffect(() => {
         new TradeSocket();

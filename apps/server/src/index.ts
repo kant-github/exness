@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import Redis from 'ioredis';
 import router from './routes';
 import { prices_of_assets } from './prices/live_prices';
+import { onPriceTick, startEngine } from './trading/engine';
 
 dotenv.config();
 
@@ -17,6 +18,8 @@ app.use(cors({
 }));
 app.use('/api', router);
 
+startEngine();
+
 const susbcriber = new Redis(REDIS_URL!)
 susbcriber.subscribe('ws:events:trades');
 susbcriber.on('message', (channel, message) => {
@@ -26,8 +29,10 @@ susbcriber.on('message', (channel, message) => {
             bid: parsed_event.bid_price,
             ask: parsed_event.ask_price,
             last: parsed_event.price,
-            spread: parsed_event.spread_percentage
+            spread: parsed_event.spread_percentage,
+            updatedAt: Date.now()
         });
+        void onPriceTick(parsed_event.symbol, parsed_event.bid_price, parsed_event.ask_price);
     } catch (err) {
         console.error("Failed to parse message:", message, err);
     }

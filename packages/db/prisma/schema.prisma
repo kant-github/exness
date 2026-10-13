@@ -33,9 +33,10 @@ model Balance {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  total    Int @default(10000)
-  tradable Int @default(10000)
-  locked   Int @default(0)
+  // Money is stored in integer cents.
+  total    BigInt @default(1000000)
+  tradable BigInt @default(1000000)
+  locked   BigInt @default(0)
 }
 
 model Orders {
@@ -43,15 +44,33 @@ model Orders {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type      OrderType
-  asset     String
-  price     BigInt
-  quantity  BigInt
-  margin    BigInt
-  levarage  Int
-  decimals  Int
-  status    OrderStatus
-  createdAt DateTime    @default(now())
+  type     OrderType
+  asset    String
+  // Prices and quantity (lots) are integers scaled by 1e8. Margin and pnl are in cents.
+  price    BigInt
+  quantity BigInt
+  margin   BigInt
+  levarage Int
+
+  stopLoss   BigInt?
+  takeProfit BigInt?
+
+  status      OrderStatus
+  closePrice  BigInt?
+  pnl         BigInt?
+  closeReason CloseReason?
+  createdAt   DateTime     @default(now())
+  closedAt    DateTime?
+
+  @@index([userId, status])
+  @@index([status, asset])
+}
+
+enum CloseReason {
+  MANUAL
+  STOP_LOSS
+  TAKE_PROFIT
+  LIQUIDATION
 }
 
 enum OrderType {

@@ -4,6 +4,7 @@ import MiniBar from "../navbar/MiniBar";
 import { useOpenBiddingStore } from "../../store/useOpenBiddingStore";
 import TradingBar from "../navbar/TradingBar";
 import { useState } from "react";
+import PositionsList from "./PositionsList";
 
 enum OrderType {
     OPEN = 'OPEN',
@@ -30,6 +31,9 @@ export default function TradingViewRightPanel() {
                         <div className="text-xs font-extralight text-neutral-400">
                             ORDERS
                         </div>
+                    </div>
+                    <div className="overflow-auto max-h-[calc(100%-3rem)]">
+                        <PositionsList mode={orderType === OrderType.OPEN ? "open" : "closed"} />
                     </div>
                 </div>
             </div>
