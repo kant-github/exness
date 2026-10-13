@@ -52,6 +52,10 @@ model Orders {
   decimals  Int
   status    OrderStatus
   createdAt DateTime    @default(now())
+
+  closePrice BigInt?
+  pnl        Int?
+  closedAt   DateTime?
 }
 
 enum OrderType {

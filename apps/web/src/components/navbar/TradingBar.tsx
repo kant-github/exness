@@ -7,29 +7,45 @@ import { cn } from "../../lib/utils";
 import { getCryptoImageUrl, getSymbolDisplayName } from "../trade-view/AssetRow";
 import axios from "axios";
 import { useUserSessionStore } from "../../store/useUserSessionStore";
+import { useUserDataStore } from "../../store/useUserDataStore";
+import { useOrdersStore } from "../../store/useOrdersStore";
+import { TRADE_URL } from "../../routes/api_routes";
+
+const LEVERAGE_OPTIONS = [1, 5, 10, 20, 100];
 
 export default function TradingBar() {
     const { tradeType, setTradeType } = useOpenBiddingStore();
     const { selectedSymbol, prices } = useLivePricesStore();
     const [lots, setLots] = useState(0.01);
+    const [leverage, setLeverage] = useState(1);
+    const [error, setError] = useState<string | null>(null);
+    const [placing, setPlacing] = useState(false);
     const { session } = useUserSessionStore();
+    const { setUserData } = useUserDataStore();
+    const { upsertOrder } = useOrdersStore();
 
     async function placeOrder() {
+        if (!selectedSymbol || !tradeType || placing) return;
+        setError(null);
+        setPlacing(true);
         try {
-            if (!selectedSymbol) return;
-            const { data } = await axios.post('http://localhost:4000/api/trade', {
+            const { data } = await axios.post(TRADE_URL, {
                 asset: selectedSymbol,
                 type: tradeType,
                 lots: lots,
-                levarage: 1
+                levarage: leverage
             }, {
                 headers: {
                     Authorization: `Bearer ${session?.user?.token}`
                 }
             })
-            console.log("data is : ", data);
+            upsertOrder(data.order);
+            if (data.balance) setUserData({ Balance: data.balance });
+            setTradeType(null);
         } catch (err) {
-            console.error(err);
+            setError(axios.isAxiosError(err) && err.response?.data?.message ? err.response.data.message : "Could not place the order");
+        } finally {
+            setPlacing(false);
         }
     }
 
@@ -131,9 +147,26 @@ export default function TradingBar() {
                         </div>
                     </div>
 
+                    <div className="mt-4">
+                        <div className="text-xs text-neutral-400 mb-1">Leverage</div>
+                        <select
+                            aria-label="leverage-select"
+                            value={leverage}
+                            onChange={(e) => setLeverage(Number(e.target.value))}
+                            className="w-full bg-neutral-800 rounded-md border border-neutral-700 px-3 py-2 text-sm text-neutral-100 outline-none"
+                        >
+                            {LEVERAGE_OPTIONS.map((option) => (
+                                <option key={option} value={option}>1:{option}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {error && <div className="mt-4 text-xs text-[#eb483f]">{error}</div>}
+
                     <div className="flex flex-col space-y-2 mt-8">
                         <button
                             onClick={placeOrder}
+                            disabled={placing}
                             type="button"
                             className={cn(
                                 "text-neutral-300 text-xs w-full items-center py-2.5 rounded-sm cursor-pointer",

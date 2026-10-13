@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import Redis from 'ioredis';
 import router from './routes';
 import { prices_of_assets } from './prices/live_prices';
+import { liquidateLosingPositions, loadOpenPositions } from './trading/openPositions';
 
 dotenv.config();
 
@@ -22,16 +23,20 @@ susbcriber.subscribe('ws:events:trades');
 susbcriber.on('message', (channel, message) => {
     try {
         const parsed_event = JSON.parse(message);
-        prices_of_assets.set(parsed_event.symbol, {
-            bid: parsed_event.bid_price,
-            ask: parsed_event.ask_price,
-            last: parsed_event.price,
+        const quote = {
+            bid: parseFloat(parsed_event.bid_price),
+            ask: parseFloat(parsed_event.ask_price),
+            last: parseFloat(parsed_event.price),
             spread: parsed_event.spread_percentage
-        });
+        };
+        prices_of_assets.set(parsed_event.symbol, quote);
+        liquidateLosingPositions(parsed_event.symbol, quote);
     } catch (err) {
         console.error("Failed to parse message:", message, err);
     }
 })
+
+loadOpenPositions().catch((err) => console.error("Failed to load open positions", err));
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

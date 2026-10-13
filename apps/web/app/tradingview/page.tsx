@@ -10,6 +10,8 @@ import { useUserSessionStore } from "../../src/store/useUserSessionStore";
 import { useUserDataStore } from "../../src/store/useUserDataStore";
 import { useLivePricesStore } from "../../src/store/useLivePricesStore";
 import TradeSocket from "../../src/socket/TradeSocket";
+import { useOrdersStore } from "../../src/store/useOrdersStore";
+import { ORDERS_URL } from "../../src/routes/api_routes";
 
 export default function Page() {
     const { timeSeries } = useTimeSeriesStore();
@@ -17,6 +19,7 @@ export default function Page() {
     const { session } = useUserSessionStore();
     const { setUserData, userData } = useUserDataStore();
     const { selectedSymbol } = useLivePricesStore();
+    const { setOrders } = useOrdersStore();
 
 
     useEffect(() => {
@@ -35,8 +38,22 @@ export default function Page() {
                 }
             }
             getUserData();
+
+            async function getOrders() {
+                try {
+                    const { data } = await axios.get(ORDERS_URL, {
+                        headers: {
+                            Authorization: `Bearer ${session?.user?.token}`
+                        }
+                    });
+                    setOrders(data.orders);
+                } catch (err) {
+                    console.log(err);
+                }
+            }
+            getOrders();
         }
-    }, [session?.user?.token, setUserData]);
+    }, [session?.user?.token, setUserData, setOrders]);
 
     useEffect(() => {
         fetchCandles(selectedSymbol, timeSeries);
