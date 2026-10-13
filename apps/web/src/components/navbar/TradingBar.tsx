@@ -5,7 +5,7 @@ import { useLivePricesStore } from "../../store/useLivePricesStore";
 import { useState } from "react";
 import { cn } from "../../lib/utils";
 import { getCryptoImageUrl, getSymbolDisplayName } from "../trade-view/AssetRow";
-import axios from "axios";
+import { usePositionsStore } from "../../store/usePositionsStore";
 import { useUserSessionStore } from "../../store/useUserSessionStore";
 
 export default function TradingBar() {
@@ -13,23 +13,40 @@ export default function TradingBar() {
     const { selectedSymbol, prices } = useLivePricesStore();
     const [lots, setLots] = useState(0.01);
     const { session } = useUserSessionStore();
+    const placeOrderRequest = usePositionsStore((state) => state.placeOrder);
+    const [leverage, setLeverage] = useState(1);
+    const [stopLoss, setStopLoss] = useState("");
+    const [takeProfit, setTakeProfit] = useState("");
+    const [error, setError] = useState<string | null>(null);
+    const [submitting, setSubmitting] = useState(false);
 
     async function placeOrder() {
+        if (!selectedSymbol || !tradeType || !session?.user?.token || submitting) return;
+        const slValue = stopLoss.trim() === "" ? undefined : Number(stopLoss);
+        const tpValue = takeProfit.trim() === "" ? undefined : Number(takeProfit);
+        if ((slValue !== undefined && !(slValue > 0)) || (tpValue !== undefined && !(tpValue > 0))) {
+            setError("Stop loss and take profit must be positive prices");
+            return;
+        }
+
+        setSubmitting(true);
+        setError(null);
         try {
-            if (!selectedSymbol) return;
-            const { data } = await axios.post('http://localhost:4000/api/trade', {
+            await placeOrderRequest(session.user.token, {
                 asset: selectedSymbol,
                 type: tradeType,
-                lots: lots,
-                levarage: 1
-            }, {
-                headers: {
-                    Authorization: `Bearer ${session?.user?.token}`
-                }
-            })
-            console.log("data is : ", data);
+                lots,
+                levarage: leverage,
+                stopLoss: slValue,
+                takeProfit: tpValue,
+            });
+            setStopLoss("");
+            setTakeProfit("");
+            setTradeType(null);
         } catch (err) {
-            console.error(err);
+            setError(err instanceof Error ? err.message : "Could not place the trade");
+        } finally {
+            setSubmitting(false);
         }
     }
 
@@ -131,12 +148,56 @@ export default function TradingBar() {
                         </div>
                     </div>
 
-                    <div className="flex flex-col space-y-2 mt-8">
+                    <div className="mt-3">
+                        <div className="text-xs text-neutral-400 mb-1">Leverage</div>
+                        <select
+                            aria-label="leverage-select"
+                            value={leverage}
+                            onChange={(e) => setLeverage(Number(e.target.value))}
+                            className="w-full bg-neutral-800 rounded-md border border-neutral-700 px-3 py-2 text-sm text-neutral-100 outline-none"
+                        >
+                            {[1, 5, 10, 20, 100].map((l) => (
+                                <option key={l} value={l}>1:{l}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-x-1">
+                        <div>
+                            <div className="text-xs text-neutral-400 mb-1">Take profit</div>
+                            <input
+                                aria-label="take-profit-input"
+                                type="number"
+                                min={0}
+                                placeholder="Not set"
+                                value={takeProfit}
+                                onChange={(e) => setTakeProfit(e.target.value)}
+                                className="w-full bg-neutral-800 rounded-md border border-neutral-700 px-3 py-2 text-sm text-neutral-100 outline-none"
+                            />
+                        </div>
+                        <div>
+                            <div className="text-xs text-neutral-400 mb-1">Stop loss</div>
+                            <input
+                                aria-label="stop-loss-input"
+                                type="number"
+                                min={0}
+                                placeholder="Not set"
+                                value={stopLoss}
+                                onChange={(e) => setStopLoss(e.target.value)}
+                                className="w-full bg-neutral-800 rounded-md border border-neutral-700 px-3 py-2 text-sm text-neutral-100 outline-none"
+                            />
+                        </div>
+                    </div>
+
+                    {error && <div className="mt-3 text-xs text-[#eb483f]">{error}</div>}
+
+                    <div className="flex flex-col space-y-2 mt-6">
                         <button
                             onClick={placeOrder}
+                            disabled={submitting}
                             type="button"
                             className={cn(
-                                "text-neutral-300 text-xs w-full items-center py-2.5 rounded-sm cursor-pointer",
+                                "text-neutral-300 text-xs w-full items-center py-2.5 rounded-sm cursor-pointer disabled:opacity-50",
                                 tradeType === TradeType.BID && "bg-[#eb483f]",
                                 tradeType === TradeType.ASK && "bg-[#178bf9]"
                             )}

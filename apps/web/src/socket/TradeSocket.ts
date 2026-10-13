@@ -70,7 +70,7 @@ export default class TradeSocket {
                 );
             }
             this.buffer = {};
-        }, 2000);
+        }, 250);
     }
 
     public disconnect() {

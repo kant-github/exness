@@ -9,14 +9,14 @@ import { useLivePricesStore } from "../../store/useLivePricesStore";
 import { getCryptoImageUrl, getSymbolDisplayName } from "../trade-view/AssetRow";
 import Image from "next/image";
 import { cn } from "../../lib/utils";
+import { formatUsd } from "../../lib/trading";
 
 export default function TradingViewNav() {
     const { timeSeries } = useTimeSeriesStore();
     const { userData } = useUserDataStore()
     const [openTimeSeriesDropdown, setOpenTimeSeriesDropdown] = useState<boolean>(false);
     const [openDepositDropdown, setOpenDepositDropdown] = useState<boolean>(false);
-    const { selectedSymbol, prices } = useLivePricesStore();
-    const asset = prices[selectedSymbol];
+    const { selectedSymbol } = useLivePricesStore();
 
     return (
         <div className="w-full bg-neutral-900">
@@ -42,7 +42,7 @@ export default function TradingViewNav() {
                     <div className={cn(`bg-[#ffdd03]/10 cursor-pointer px-3 rounded-sm border-[1px] border-[#ffdd03]/80`)}>
                         <span className="text-[9px] font-thin tracking-wider text-neutral-900 bg-[#ffdd03]/80 px-1 py-0.5 rounded-xs">Demo</span>
                         <div className={cn("text-sm tracking-wider font-thin text-neutral-100 hover:bg-[#232e34] ")}>
-                            {userData?.Balance?.total} USD
+                            {userData?.Balance ? formatUsd(userData.Balance.total) : '--'} USD
                         </div>
                     </div>
                     <div className="relative">

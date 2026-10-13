@@ -1,5 +1,6 @@
 import prisma from "@repo/db/client";
-import { Request, Response, response } from "express";
+import { Request, Response } from "express";
+import { serializeBalance } from "../trading/serialize";
 
 export default async function getUserDataController(req: Request, res: Response) {
     if (!req.user?.id) {
@@ -17,7 +18,7 @@ export default async function getUserDataController(req: Request, res: Response)
         })
 
         res.status(200).json({
-            user
+            user: user && { ...user, Balance: user.Balance && serializeBalance(user.Balance) }
         })
         return;
     } catch (err) {
