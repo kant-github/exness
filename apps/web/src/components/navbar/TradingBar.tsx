@@ -7,29 +7,44 @@ import { cn } from "../../lib/utils";
 import { getCryptoImageUrl, getSymbolDisplayName } from "../trade-view/AssetRow";
 import axios from "axios";
 import { useUserSessionStore } from "../../store/useUserSessionStore";
+import { useOrdersStore } from "../../store/useOrdersStore";
+import { useUserDataStore } from "../../store/useUserDataStore";
+
+const LEVERAGE_OPTIONS = [1, 5, 10, 20, 100];
 
 export default function TradingBar() {
     const { tradeType, setTradeType } = useOpenBiddingStore();
     const { selectedSymbol, prices } = useLivePricesStore();
     const [lots, setLots] = useState(0.01);
+    const [leverage, setLeverage] = useState(1);
+    const [placing, setPlacing] = useState(false);
     const { session } = useUserSessionStore();
+    const { userData, setUserData } = useUserDataStore();
 
     async function placeOrder() {
+        if (!selectedSymbol || placing) return;
+        setPlacing(true);
         try {
-            if (!selectedSymbol) return;
             const { data } = await axios.post('http://localhost:4000/api/trade', {
                 asset: selectedSymbol,
                 type: tradeType,
                 lots: lots,
-                levarage: 1
+                levarage: leverage
             }, {
                 headers: {
                     Authorization: `Bearer ${session?.user?.token}`
                 }
             })
-            console.log("data is : ", data);
+            // Refresh the orders tabs and the balance shown in the navbar.
+            void useOrdersStore.getState().fetchOrders("OPEN");
+            void useOrdersStore.getState().fetchOrders("CLOSED");
+            if (data?.balance && userData) {
+                setUserData({ ...userData, Balance: data.balance });
+            }
         } catch (err) {
             console.error(err);
+        } finally {
+            setPlacing(false);
         }
     }
 
@@ -128,6 +143,28 @@ export default function TradingBar() {
                                     </button>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-4">
+                        <div className="text-xs text-neutral-400 mb-1">Leverage</div>
+                        <div className="flex items-center justify-between bg-neutral-800 rounded-md border border-neutral-700 p-1">
+                            {LEVERAGE_OPTIONS.map((option) => (
+                                <button
+                                    key={option}
+                                    onClick={() => setLeverage(option)}
+                                    type="button"
+                                    className={cn(
+                                        "flex-1 text-xs py-1.5 rounded-sm cursor-pointer",
+                                        leverage === option ? "bg-[#ffde02] text-neutral-900 font-medium" : "text-neutral-300 hover:bg-neutral-700"
+                                    )}
+                                >
+                                    x{option}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="text-[10px] text-neutral-400 mt-1 text-right">
+                            Margin: {(((parseFloat(priceData?.askPrice || '0') + parseFloat(priceData?.bidPrice || '0')) / 2) * lots / leverage).toFixed(2)} USD
                         </div>
                     </div>
 
