@@ -17,24 +17,31 @@ interface LiveTradingDataStoreProps {
     fetchCandles: (asset: string, interval: string) => Promise<void>;
 }
 
-export const useLiveTradingDataStore = create<LiveTradingDataStoreProps>((set) => ({
-    candles: [],
+export const useLiveTradingDataStore = create<LiveTradingDataStoreProps>((set) => {
+    let latestRequestId = 0;
 
-    fetchCandles: async (asset: string, interval: string) => {
-        try {
-            set({ candles: [] });
+    return {
+        candles: [],
 
-            const response = await axios.get("http://localhost:4000/api/candles", {
-                params: {
-                    symbol: asset,
-                    interval,
-                    limit: 100,
-                },
-            });
+        fetchCandles: async (asset: string, interval: string) => {
+            const requestId = ++latestRequestId;
+            try {
+                set({ candles: [] });
 
-            set({ candles: response.data.candles });
-        } catch (error) {
-            console.error("Error fetching candles:", error);
-        }
-    },
-}));
+                const response = await axios.get("http://localhost:4000/api/candles", {
+                    params: {
+                        symbol: asset,
+                        interval,
+                        limit: 100,
+                    },
+                });
+
+                if (requestId !== latestRequestId) return;
+
+                set({ candles: response.data.candles });
+            } catch (error) {
+                console.error("Error fetching candles:", error);
+            }
+        },
+    };
+});
