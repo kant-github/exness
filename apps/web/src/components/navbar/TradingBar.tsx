@@ -8,11 +8,16 @@ import { getCryptoImageUrl, getSymbolDisplayName } from "../trade-view/AssetRow"
 import axios from "axios";
 import { useUserSessionStore } from "../../store/useUserSessionStore";
 
+const MIN_LOTS = 0.01;
+
 export default function TradingBar() {
     const { tradeType, setTradeType } = useOpenBiddingStore();
     const { selectedSymbol, prices } = useLivePricesStore();
-    const [lots, setLots] = useState(0.01);
+    const [lotInput, setLotInput] = useState("0.01");
     const { session } = useUserSessionStore();
+
+    const parsedLots = parseFloat(lotInput);
+    const lots = Number.isNaN(parsedLots) || parsedLots < MIN_LOTS ? MIN_LOTS : parsedLots;
 
     async function placeOrder() {
         try {
@@ -34,18 +39,21 @@ export default function TradingBar() {
     }
 
     function increment() {
-        setLots(prev => +(prev + 0.01).toFixed(2));
+        const next = +(lots + 0.01).toFixed(2);
+        setLotInput(String(next));
     };
 
     function decrement() {
-        setLots(prev => Math.max(0.01, +(prev - 0.01).toFixed(2)));
+        const next = Math.max(MIN_LOTS, +(lots - 0.01).toFixed(2));
+        setLotInput(String(next));
     };
 
     function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const value = parseFloat(e.target.value);
-        if (value >= 0.01) {
-            setLots(value);
-        }
+        setLotInput(e.target.value);
+    };
+
+    function handleInputBlur() {
+        setLotInput(String(lots));
     };
 
     const priceData = prices[selectedSymbol];
@@ -103,8 +111,9 @@ export default function TradingBar() {
                                     <input
                                         aria-label="volume-input"
                                         type="number"
-                                        value={lots}
+                                        value={lotInput}
                                         onChange={handleInputChange}
+                                        onBlur={handleInputBlur}
                                         step={0.01}
                                         min={0.01}
                                         className="w-full bg-transparent px-3 py-2 text-sm text-neutral-100 outline-none"
