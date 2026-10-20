@@ -1,15 +1,13 @@
 import { useEffect, useRef } from "react";
 import { TimeSeriesEnum, useTimeSeriesStore } from "../../store/useTimeSeriesStore";
-import { useLiveTradingDataStore } from "../../store/useLiveTradingDataStore";
 
 interface TimeSeriesProps {
     setOpenTimeSeriesDropdown: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export default function TimeSeries({ setOpenTimeSeriesDropdown }: TimeSeriesProps) {
-    const { timeSeries, setTimeSeries } = useTimeSeriesStore();
+    const { setTimeSeries } = useTimeSeriesStore();
     const timeSeriesDropdownRef = useRef<HTMLDivElement>(null);
-    const { fetchCandles } = useLiveTradingDataStore()
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -27,7 +25,6 @@ export default function TimeSeries({ setOpenTimeSeriesDropdown }: TimeSeriesProp
     const handleSelectTimeSeries = (ts: TimeSeriesEnum) => {
         setTimeSeries(ts);
         setOpenTimeSeriesDropdown(false);
-        fetchCandles('BTCUSDT', timeSeries);
     };
 
     return (
