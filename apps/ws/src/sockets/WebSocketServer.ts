@@ -37,8 +37,8 @@ export default class WebSocketServer {
         this.wss = new WSServer({ port: 8080 });
         this.subscriber = new Redis(REDIS_URL!);
 
-        const key = this.get_publisher_key();
-        this.subscriber.subscribe(key);
+        const keys = this.get_publisher_keys();
+        this.subscriber.subscribe(...keys);
         this.read_subscriber_message();
         this.intitialize_wss_connection();
     }
@@ -71,7 +71,8 @@ export default class WebSocketServer {
     }
 
 
-    private get_publisher_key() {
-        return "ws:events:trades"
+    private get_publisher_keys() {
+        // live price ticks + per-user order lifecycle events
+        return ["ws:events:trades", "ws:events:orders"]
     }
 }

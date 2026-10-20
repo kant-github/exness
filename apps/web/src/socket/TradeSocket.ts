@@ -1,4 +1,6 @@
 import { useLivePricesStore } from "../store/useLivePricesStore";
+import { useOrdersStore, type OrderEvent } from "../store/useOrdersStore";
+import { useUserSessionStore } from "../store/useUserSessionStore";
 
 type TradeMessage = {
     symbol: string;
@@ -6,6 +8,12 @@ type TradeMessage = {
     bid_price: string;
     ask_price: string;
 };
+
+type SocketMessage = TradeMessage | OrderEvent;
+
+function isOrderEvent(message: SocketMessage): message is OrderEvent {
+    return (message as OrderEvent).type === "order_event";
+}
 
 export default class TradeSocket {
     private ws: WebSocket | null = null;
@@ -29,9 +37,13 @@ export default class TradeSocket {
             try {
                 const parsed = JSON.parse(String(data));
                 const message = typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
-                console.log("---------Received message: ", message);
+
+                if (isOrderEvent(message)) {
+                    this.handle_order_event(message);
+                    return;
+                }
+
                 if (message.symbol && message.price) {
-                    console.log("i am receiving message : ", message);
                     // keep only the latest message per symbol
                     this.buffer[message.symbol] = message;
                 }
@@ -54,6 +66,13 @@ export default class TradeSocket {
             const { setConnectionStatus } = useLivePricesStore.getState();
             setConnectionStatus(false);
         };
+    }
+
+    private handle_order_event(event: OrderEvent) {
+        const { session } = useUserSessionStore.getState();
+        if (session?.user?.id && event.userId === session.user.id) {
+            useOrdersStore.getState().applyOrderEvent(event);
+        }
     }
 
     private startFlusher() {

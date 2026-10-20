@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import Redis from 'ioredis';
 import router from './routes';
 import { prices_of_assets } from './prices/live_prices';
+import { getEngine } from './orders/engineSingleton';
 
 dotenv.config();
 
@@ -28,6 +29,14 @@ susbcriber.on('message', (channel, message) => {
             last: parsed_event.price,
             spread: parsed_event.spread_percentage
         });
+
+        // evaluate pending entries, stop losses, take profits and
+        // liquidations on every tick, even with no browser connected
+        const bid = parseFloat(String(parsed_event.bid_price));
+        const ask = parseFloat(String(parsed_event.ask_price));
+        if (Number.isFinite(bid) && Number.isFinite(ask)) {
+            getEngine().processTick(parsed_event.symbol, bid, ask);
+        }
     } catch (err) {
         console.error("Failed to parse message:", message, err);
     }

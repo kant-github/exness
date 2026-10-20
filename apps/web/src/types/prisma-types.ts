@@ -29,12 +29,34 @@ export interface Balance {
 export interface Orders {
   id: string;
   userId: string;
-  user?: User;  // optional to avoid circular typing
   type: OrderType;
   asset: string;
+  entryType: EntryType;
+  triggerPrice: number | null;
   price: number;
-  locked: number;
-  qty: string;  // Decimal → string in JSON
+  quantity: number;
+  margin: number;
+  levarage: number;
+  decimals: number;
+  status: OrderStatus;
+  stopLoss: number | null;
+  takeProfit: number | null;
+  closePrice: number | null;
+  closeReason: CloseReason | null;
+  createdAt: string;
+  openedAt: string | null;
+  closedAt: string | null;
 }
 
 export type OrderType = "LONG" | "SHORT";
+export type EntryType = "MARKET" | "LIMIT" | "STOP";
+export type OrderStatus = "PENDING" | "OPEN" | "CLOSED" | "REJECTED" | "CANCELLED";
+export type CloseReason = "USER" | "STOP_LOSS" | "TAKE_PROFIT" | "LIQUIDATION" | "INSUFFICIENT_FUNDS";
+
+export const CLOSE_REASON_LABELS: Record<string, string> = {
+  USER: "You closed it",
+  STOP_LOSS: "Stop loss",
+  TAKE_PROFIT: "Take profit",
+  LIQUIDATION: "Out of margin (liquidated)",
+  INSUFFICIENT_FUNDS: "Never opened — not enough free money",
+};

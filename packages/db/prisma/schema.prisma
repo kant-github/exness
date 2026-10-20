@@ -43,15 +43,27 @@ model Orders {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type      OrderType
-  asset     String
-  price     BigInt
-  quantity  BigInt
-  margin    BigInt
-  levarage  Int
-  decimals  Int
-  status    OrderStatus
-  createdAt DateTime    @default(now())
+  type         OrderType
+  asset        String
+  entryType    EntryType   @default(MARKET)
+  triggerPrice Decimal?    @db.Decimal(18, 8)
+  price        Decimal     @default(0) @db.Decimal(18, 8)
+  quantity     Decimal      @db.Decimal(18, 8)
+  margin       Decimal      @default(0) @db.Decimal(18, 8)
+  levarage     Int
+  decimals     Int          @default(2)
+  status       OrderStatus  @default(PENDING)
+  stopLoss     Decimal?     @db.Decimal(18, 8)
+  takeProfit   Decimal?     @db.Decimal(18, 8)
+  closePrice   Decimal?     @db.Decimal(18, 8)
+  closeReason  CloseReason?
+  createdAt    DateTime     @default(now())
+  openedAt     DateTime?
+  closedAt     DateTime?
+
+  @@index([asset, status])
+  @@index([userId, status])
+  @@map("Orders")
 }
 
 enum OrderType {
@@ -59,8 +71,24 @@ enum OrderType {
   SHORT
 }
 
+enum EntryType {
+  MARKET
+  LIMIT
+  STOP
+}
+
 enum OrderStatus {
+  PENDING
   OPEN
   CLOSED
-  LIQUIDATED
+  REJECTED
+  CANCELLED
+}
+
+enum CloseReason {
+  USER
+  STOP_LOSS
+  TAKE_PROFIT
+  LIQUIDATION
+  INSUFFICIENT_FUNDS
 }
