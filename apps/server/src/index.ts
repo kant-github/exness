@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import Redis from 'ioredis';
 import router from './routes';
 import { prices_of_assets } from './prices/live_prices';
+import { liquidationCheck } from './trading/liquidation';
 
 dotenv.config();
 
@@ -28,6 +29,11 @@ susbcriber.on('message', (channel, message) => {
             last: parsed_event.price,
             spread: parsed_event.spread_percentage
         });
+        // Every live price tick is a chance to liquidate positions whose
+        // loss has eaten through their margin.
+        liquidationCheck(parsed_event.symbol).catch((err) =>
+            console.error("Liquidation check failed:", err)
+        );
     } catch (err) {
         console.error("Failed to parse message:", message, err);
     }

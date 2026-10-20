@@ -26,15 +26,21 @@ export interface Balance {
   locked: number;
 }
 
+export type OrderType = "LONG" | "SHORT";
+export type OrderStatus = "OPEN" | "CLOSED" | "LIQUIDATED";
+
 export interface Orders {
   id: string;
   userId: string;
-  user?: User;  // optional to avoid circular typing
   type: OrderType;
   asset: string;
-  price: number;
-  locked: number;
-  qty: string;  // Decimal → string in JSON
+  price: number;       // entry price
+  quantity: number;     // lots
+  margin: number;
+  levarage: number;
+  status: OrderStatus;
+  createdAt: string;
+  exitPrice: number | null;
+  closedAt: string | null;
+  pnl: number | null;   // realized P/L for CLOSED / LIQUIDATED orders
 }
-
-export type OrderType = "LONG" | "SHORT";
